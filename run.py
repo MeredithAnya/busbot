@@ -2,23 +2,21 @@
 from flask import Flask, request
 from twilio.twiml.messaging_response import MessagingResponse
 from parser import parse_text_body
-from parser import format_times_message
+from parser import format_times_message, format_stops_message
 from nextbus_client import NextBusClient
-from nextbus_client import get_prediction_times
 
 app = Flask(__name__)
-app.config.from_object('default_settings')
+# app.config.from_object('default_settings')
 
 @app.route("/sms", methods=['GET', 'POST'])
-def sms_ahoy_reply():
+def sms_reply():
     """Respond to incoming messages with a friendly SMS."""
     # Start our response
     resp = MessagingResponse()
-    route, command = parse_text_body(request.values['Body'])
-    nb_client = NextBusClient(route=route)
-    times = get_prediction_times(nb_client)
+    kwargs = parse_text_body(request.values['Body'])
+    nb_client = NextBusClient(**kwargs)
 
-    message = format_times_message(route, times)
+    message = nb_client.get_message()
     resp.message(message)
 
     return str(resp)
